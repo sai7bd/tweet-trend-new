@@ -1,61 +1,53 @@
 def registry = 'https://cditsaif.jfrog.io'
-
 pipeline {
     agent {
         node {
             label 'maven'
-            // Set PATH directly in the node block
-            env.PATH = "/opt/apache-maven-3.9.4/bin:$PATH"
         }
     }
-    
-    environment {
-        // You can define other environment variables here if needed
-    }
-    
+environment {
+    PATH = "/opt/apache-maven-3.9.4/bin:$PATH"
+}
     stages {
-        stage("Build") {
+        stage("build"){
             steps {
-                echo "----------- Build Started ----------"
+                 echo "----------- build started ----------"
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
-                echo "----------- Build Completed ----------"
+                 echo "----------- build complted ----------"
             }
         }
-        
-        stage("Test") {
-            steps {
-                echo "----------- Unit Test Started ----------"
+        stage("test"){
+            steps{
+                echo "----------- unit test started ----------"
                 sh 'mvn surefire-report:report'
-                echo "----------- Unit Test Completed ----------"
+                 echo "----------- unit test Complted ----------"
             }
         }
-        
-        stage("Jar Publish") {
-            steps {
-                script {
+
+         stage("Jar Publish") {
+        steps {
+            script {
                     echo '<--------------- Jar Publish Started --------------->'
-                    
-                    def server = Artifactory.newServer url: "${registry}/artifactory", credentialsId: "Jgrog"
-                    def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}"
-                    def uploadSpec = """{
-                        "files": [
+                     def server = Artifactory.newServer url:registry+"/artifactory" ,  credentialsId:"Jgrog"
+                     def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}";
+                     def uploadSpec = """{
+                          "files": [
                             {
-                                "pattern": "target/*.jar",
-                                "target": "libs-release-local/",
-                                "flat": "false",
-                                "props": "${properties}",
-                                "exclusions": ["*.sha1", "*.md5"]
+                              "pattern": "jarstaging/(*)",
+                              "target": "libs-release-local/{1}",
+                              "flat": "false",
+                              "props" : "${properties}",
+                              "exclusions": [ "*.sha1", "*.md5"]
                             }
-                        ]
-                    }"""
-                    
-                    def buildInfo = server.upload(uploadSpec)
-                    buildInfo.env.collect()
-                    server.publishBuildInfo(buildInfo)
-                    
-                    echo '<--------------- Jar Publish Ended --------------->'  
-                }
-            }   
-        }  
-    }
+                         ]
+                     }"""
+                     def buildInfo = server.upload(uploadSpec)
+                     buildInfo.env.collect()
+                     server.publishBuildInfo(buildInfo)
+                     echo '<--------------- Jar Publish Ended --------------->'  
+            
+            }
+        }   
+    }  
+}
 }
