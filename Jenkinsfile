@@ -1,4 +1,4 @@
-def registry = 'https://cditsaif.jfrog.io'
+def registry = 'https://cditpoject.jfrog.io'
 pipeline {
     agent {
         node {
@@ -28,13 +28,13 @@ environment {
         steps {
             script {
                     echo '<--------------- Jar Publish Started --------------->'
-                     def server = Artifactory.newServer url:registry+"/artifactory" ,  credentialsId:"frog"
+                     def server = Artifactory.newServer url:registry+"/artifactory" ,  credentialsId:"Jenkins-cred"
                      def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}";
                      def uploadSpec = """{
                           "files": [
                             {
                               "pattern": "jarstaging/(*)",
-                              "target": "libs-release-local/{1}",
+                              "target": "maven-libs-release-local/{1}",
                               "flat": "false",
                               "props" : "${properties}",
                               "exclusions": [ "*.sha1", "*.md5"]
